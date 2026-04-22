@@ -3,7 +3,6 @@ from typing import List
 
 from rank_bm25 import BM25Okapi
 
-from app.ingestion.embedder import embed_texts
 from app.retrieval import qdrant_client
 
 logger = logging.getLogger(__name__)

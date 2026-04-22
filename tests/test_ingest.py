@@ -1,5 +1,4 @@
 import pytest
-from io import BytesIO
 
 from app.ingestion.loader import load_document
 
@@ -9,7 +8,7 @@ class TestLoader:
         content = b"%PDF-1.4 test content"
         
         with pytest.raises(Exception):
-            result = load_document(content, "application/pdf")
+            load_document(content, "application/pdf")
     
     def test_markdown_loading_strips_markdown(self):
         content = b"# Heading\n\nParagraph text"
@@ -34,7 +33,7 @@ class TestLoader:
         content = b"PK\x00\x00 mock docx"
         
         with pytest.raises(Exception):
-            result = load_document(content, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+            load_document(content, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
     
     def test_empty_content(self):
         content = b""

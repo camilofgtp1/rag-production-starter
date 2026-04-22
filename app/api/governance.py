@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.auth import verify_api_key
-from app.governance import deletion, drift, versioning
+from app.governance import deletion, drift
 
 router = APIRouter(prefix="/governance", tags=["governance"])
 

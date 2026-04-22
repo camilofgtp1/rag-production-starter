@@ -5,7 +5,6 @@ from fastapi.responses import JSONResponse
 
 from app.api import eval as eval_api
 from app.api import governance, ingest, query
-from app.config import settings
 from app.retrieval.qdrant_client import ensure_collection
 
 

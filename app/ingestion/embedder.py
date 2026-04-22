@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from typing import List
 
 from openai import AsyncOpenAI, RateLimitError
 
@@ -42,7 +41,7 @@ async def _embed_with_retry(texts: list[str]) -> list[list[float]]:
                 logger.warning(f"Rate limit hit, retrying in {wait_time}s (attempt {attempt + 1}/{MAX_RETRIES})")
                 await asyncio.sleep(wait_time)
             else:
-                logger.error(f"Max retries exceeded for embedding request")
+                logger.error("Max retries exceeded for embedding request")
                 raise e
         except Exception as e:
             logger.error(f"Embedding error: {e}")
