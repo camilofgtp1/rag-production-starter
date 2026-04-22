@@ -1,6 +1,6 @@
 # rag-production-starter
 
-[![pipeline status](https://gitlab.com/camilofgtp1/rag-production-starter/badges/master/pipeline.svg)](https://gitlab.com/camilofgtp1/rag-production-starter/-/pipelines)
+[![pipeline status](https://gitlab.com/camilofgtp1/rag-production-starter/badges/main/pipeline.svg)](https://gitlab.com/camilofgtp1/rag-production-starter/-/pipelines)
 
 *Most RAG tutorials get you to a working demo. This is what comes after.*
 
