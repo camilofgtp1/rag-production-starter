@@ -1,5 +1,7 @@
 # rag-production-starter
 
+[![pipeline status](https://gitlab.com/camilofgtp1/rag-production-starter/badges/master/pipeline.svg)](https://gitlab.com/camilofgtp1/rag-production-starter/-/pipelines)
+
 *Most RAG tutorials get you to a working demo. This is what comes after.*
 
 A production-ready RAG starter kit for teams who've outgrown tutorials. We cover the parts that tutorials skip: chunking strategy, hybrid search, governance, and evaluation. Built to be understood, not just run.
