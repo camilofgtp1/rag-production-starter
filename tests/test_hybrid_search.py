@@ -17,7 +17,7 @@ class TestHybridSearch:
                 {"chunk_id": "1", "score": 0.7, "doc_id": "d1", "filename": "f1.txt", "version": 1, "text": "doc one"},
             ]
             
-            with patch('app.retrieval.hybrid_search.embed_texts', new_callable=AsyncMock) as mock_embed:
+            with patch('app.ingestion.embedder.embed_texts', new_callable=AsyncMock) as mock_embed:
                 mock_embed.return_value = [[0.1] * 1536]
                 
                 results = await hybrid_search.hybrid_search(
@@ -40,7 +40,7 @@ class TestHybridSearch:
                 {"chunk_id": "1", "score": 0.5, "doc_id": "d1", "filename": "f1.txt", "version": 1, "text": "test content"},
             ]
             
-            with patch('app.retrieval.hybrid_search.embed_texts', new_callable=AsyncMock) as mock_embed:
+            with patch('app.ingestion.embedder.embed_texts', new_callable=AsyncMock) as mock_embed:
                 mock_embed.return_value = [[0.1] * 1536]
                 
                 results = await hybrid_search.hybrid_search(
@@ -63,7 +63,7 @@ class TestHybridSearch:
                 {"chunk_id": "1", "score": 0.8, "doc_id": "d1", "filename": "f1.txt", "version": 1, "text": "content one"},
             ]
             
-            with patch('app.retrieval.hybrid_search.embed_texts', new_callable=AsyncMock) as mock_embed:
+            with patch('app.ingestion.embedder.embed_texts', new_callable=AsyncMock) as mock_embed:
                 mock_embed.return_value = [[0.1] * 1536]
                 
                 results = await hybrid_search.hybrid_search(
@@ -80,7 +80,7 @@ class TestHybridSearch:
         with patch('app.retrieval.hybrid_search.qdrant_client') as mock_qdrant:
             mock_qdrant.get_all_chunks.return_value = []
             
-            with patch('app.retrieval.hybrid_search.embed_texts', new_callable=AsyncMock) as mock_embed:
+            with patch('app.ingestion.embedder.embed_texts', new_callable=AsyncMock) as mock_embed:
                 mock_embed.return_value = [[0.1] * 1536]
                 
                 results = await hybrid_search.hybrid_search(

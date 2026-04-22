@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from app.evaluation import ragas_eval
 
@@ -7,7 +7,10 @@ from app.evaluation import ragas_eval
 class TestEval:
     @pytest.mark.asyncio
     async def test_run_evaluation_returns_dict(self):
-        with patch('app.evaluation.ragas_eval.evaluate') as mock_eval:
+        mock_dataset = MagicMock()
+        with patch('app.evaluation.ragas_eval.Dataset') as MockDataset, \
+             patch('app.evaluation.ragas_eval.evaluate') as mock_eval:
+            MockDataset.from_list.return_value = mock_dataset
             mock_eval.return_value = {
                 "faithfulness": 0.85,
                 "answer_relevancy": 0.75,
@@ -26,7 +29,10 @@ class TestEval:
     
     @pytest.mark.asyncio
     async def test_returns_all_required_fields(self):
-        with patch('app.evaluation.ragas_eval.evaluate') as mock_eval:
+        mock_dataset = MagicMock()
+        with patch('app.evaluation.ragas_eval.Dataset') as MockDataset, \
+             patch('app.evaluation.ragas_eval.evaluate') as mock_eval:
+            MockDataset.from_list.return_value = mock_dataset
             mock_eval.return_value = {
                 "faithfulness": 0.8,
                 "answer_relevancy": 0.7,
