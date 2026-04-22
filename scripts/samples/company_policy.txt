@@ -1,0 +1,32 @@
+Company AI Usage Policy
+
+This document outlines the acceptable use of artificial intelligence tools within our organization.
+
+Purpose
+The purpose of this policy is to establish guidelines for the appropriate use of AI technologies in the workplace. Our company recognizes the value that AI can bring to productivity and innovation, while also understanding the need for responsible usage.
+
+Scope
+This policy applies to all employees, contractors, and temporary staff who use AI tools in connection with company business.
+
+Acceptable Use
+Employees may use approved AI tools to assist with:
+- Data analysis and reporting
+- Document drafting and editing
+- Research and information gathering
+- Code development and debugging
+- Customer service support
+
+Prohibited Uses
+AI tools must not be used to:
+- Generate content that violates company policies or legal requirements
+- Process sensitive personal data without proper authorization
+- Make automated decisions that significantly impact employees or customers
+- Replace human judgment in critical business decisions
+
+Data Security
+All AI-generated content must be reviewed by employees before sharing externally. Proprietary company information must not be shared with AI systems unless approved by the security team.
+
+Training
+All employees must complete AI usage training within 30 days of hire. Annual refresher training is required.
+
+Questions about this policy should be directed to the IT Security department.

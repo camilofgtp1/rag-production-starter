@@ -1,0 +1,37 @@
+stages:
+  - lint
+  - test
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+
+default:
+  image: python:3.11-slim
+  before_script:
+    - pip install -e ".[dev]" --quiet
+
+lint:
+  stage: lint
+  script:
+    - pip install ruff --quiet
+    - ruff check app/ tests/
+  allow_failure: true
+
+test:
+  stage: test
+  services:
+    - name: qdrant/qdrant
+      alias: qdrant
+  variables:
+    QDRANT_URL: "http://qdrant:6333"
+    OPENAI_API_KEY: "test-key-not-real"
+    COLLECTION_NAME: "test_collection"
+    MLFLOW_TRACKING_URI: "http://localhost:5000"
+    API_KEY: "test-key"
+  script:
+    - pytest tests/ -v --tb=short
+  coverage: '/TOTAL.*\s+(\d+%)$/'

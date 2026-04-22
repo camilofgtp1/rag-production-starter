@@ -1,0 +1,28 @@
+Product FAQ
+
+Q: What is your product?
+A: Our product is an enterprise software solution that helps businesses automate their workflow processes and improve operational efficiency.
+
+Q: How much does it cost?
+A: We offer three pricing tiers: Starter at $99/month, Professional at $299/month, and Enterprise with custom pricing. All plans include a 14-day free trial.
+
+Q: What payment methods do you accept?
+A: We accept all major credit cards, PayPal, and bank transfers for annual plans.
+
+Q: Is there a free trial?
+A: Yes, all plans include a 14-day free trial with full functionality. No credit card required.
+
+Q: Can I cancel my subscription?
+A: You can cancel anytime from your account settings. You'll continue to have access until the end of your billing period.
+
+Q: Do you offer refunds?
+A: We offer a 30-day money-back guarantee for all plans. Contact support for assistance.
+
+Q: How do I get started?
+A: Sign up for a free trial at our website, then follow the setup wizard to configure your account and invite team members.
+
+Q: What kind of support do you offer?
+A: We provide email support for all plans, live chat for Professional and Enterprise, and dedicated account managers for Enterprise customers.
+
+Q: Is my data secure?
+A: Yes, we use industry-standard encryption and security practices. We're SOC 2 Type II certified and comply with GDPR regulations.
