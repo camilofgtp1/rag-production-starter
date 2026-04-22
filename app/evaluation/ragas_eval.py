@@ -10,6 +10,9 @@ except ImportError:
     RAGAS_AVAILABLE = False
     evaluate = None
     Dataset = None
+    faithfulness = None
+    answer_relevancy = None
+    context_recall = None
 
 from openai import AsyncOpenAI
 
