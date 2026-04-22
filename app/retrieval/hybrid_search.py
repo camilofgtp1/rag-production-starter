@@ -36,13 +36,14 @@ async def hybrid_search(
     query_tokens = query.lower().split()
     bm25_scores = bm25.get_scores(query_tokens)
     
-    max_bm25 = max(bm25_scores) if bm25_scores else 1.0
+    max_bm25 = float(max(bm25_scores)) if len(bm25_scores) > 0 else 1.0
     if max_bm25 > 0:
-        bm25_scores = [s / max_bm25 for s in bm25_scores]
+        bm25_scores = [float(s / max_bm25) for s in bm25_scores]
+    bm25_scores = list(bm25_scores)
     
     dense_results = qdrant_client.dense_search(query_vector, top_k=50)
     
-    max_dense = max([r["score"] for r in dense_results]) if dense_results else 1.0
+    max_dense = float(max([r["score"] for r in dense_results])) if dense_results else 1.0
     
     dense_scores_map = {}
     for r in dense_results:
@@ -70,7 +71,7 @@ async def hybrid_search(
     for rank, result in enumerate(dense_ranking):
         chunk_id = result["chunk_id"]
         dense_score = dense_scores_map.get(chunk_id, 0.0)
-        rrf_scores[chunk_id] = rrf_scores.get(chunk_id, 0) + alpha * (1.0 / (rank + k)) * (dense_score if dense_score > 0 else 1.0)
+        rrf_scores[chunk_id] = rrf_scores.get(chunk_id, 0) + alpha * (1.0 / (rank + k)) * (float(dense_score) if float(dense_score) > 0 else 1.0)
     
     sorted_chunks = sorted(
         [(cid, score) for cid, score in rrf_scores.items()],
