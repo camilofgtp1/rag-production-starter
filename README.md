@@ -56,6 +56,28 @@ These are all reasonable features. We left them out because they'd make this sta
 - **Custom embedding models**: Requires GPU infrastructure. Out of scope.
 - **Fine-tuning**: Not a retrieval problem. Different project entirely.
 
+## Common Failures This Prevents
+
+These aren't hypothetical. They're the things that broke in production before this project existed.
+
+**Retrieval that works in demos, fails on real queries**
+Keyword search misses synonyms. Vector search misses product codes and exact identifiers. Neither alone is sufficient. The hybrid search with tunable alpha lets you slide the balance toward what your data actually needs — without rewriting your retrieval logic when you discover the default was wrong.
+
+**Chunks that destroy meaning at boundaries**
+Fixed-size chunking splits sentences mid-thought. You get chunks like "the threshold for triggering an alert is" and "15 percent above baseline" — two separate vectors that each retrieve nonsense in isolation. Semantic chunking respects paragraph boundaries. This one change moves eval scores more than any retrieval tuning.
+
+**Stale documents that nobody notices**
+A policy changes. The new version gets uploaded. Without versioning, the old and new vectors coexist in the index. Queries return whichever chunks score higher — sometimes old, sometimes new, always unpredictable. Document versioning with hard re-indexing on version bump fixes this silently.
+
+**GDPR deletion requests with no implementation**
+Someone asks for their data to be deleted. You grep for their name in the codebase and realize vectors aren't keyed by anything useful. Hard deletion by doc_id with a logged audit trail is the minimum you need before this becomes a legal problem, not an engineering problem.
+
+**Evaluation theater**
+Running Ragas once at project launch and calling it "evaluated." Evaluation without MLflow tracking means you have no idea if last week's chunking change improved or degraded retrieval quality. Metrics logged per run give you actual signal on what changed and why.
+
+**The demo that doesn't survive first contact with real documents**
+Sample documents are clean, short, and well-structured. Production documents are PDFs with tables, DOCX files with tracked changes, Markdown with code blocks. The ingestion pipeline handles all four formats with a single interface — so the format your client actually uses doesn't become a week-long integration project.
+
 ## Documentation
 
 Start with [ARCHITECTURE.md](ARCHITECTURE.md) — it explains why we made the decisions we did, including what we traded off.
