@@ -8,7 +8,7 @@ class IngestRequest(BaseModel):
     content: str
     mime_type: str = Field(
         ...,
-        description="One of: application/pdf, text/markdown, text/plain, application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        description="One of: application/pdf, text/markdown, text/plain, application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     )
     doc_id: Optional[str] = None
     version: int = 1
@@ -21,7 +21,7 @@ class QueryRequest(BaseModel):
         default=0.5,
         ge=0.0,
         le=1.0,
-        description="Hybrid search blend: 0.0 = keyword only, 1.0 = dense only"
+        description="Hybrid search blend: 0.0 = keyword only, 1.0 = dense only",
     )
 
 
@@ -31,6 +31,7 @@ class ChunkSource(BaseModel):
     filename: str
     version: int
     score: float
+    text: str = ""
 
 
 class QueryResponse(BaseModel):

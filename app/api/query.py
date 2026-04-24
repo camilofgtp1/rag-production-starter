@@ -22,16 +22,16 @@ async def query_document(
 ) -> QueryResponse:
     query_vectors = await embedder.embed_texts([request.query])
     query_vector = query_vectors[0]
-    
+
     results = await hybrid_search.hybrid_search(
         request.query,
         query_vector,
         top_k=request.top_k,
         alpha=request.alpha,
     )
-    
+
     answer = await llm.generate_answer(request.query, results)
-    
+
     sources = [
         ChunkSource(
             doc_id=r["doc_id"],
@@ -39,10 +39,11 @@ async def query_document(
             filename=r["filename"],
             version=r["version"],
             score=r["score"],
+            text=r.get("text", ""),
         )
         for r in results
     ]
-    
+
     eval_scores = None
     if run_eval:
         contexts = [r["text"] for r in results]
@@ -52,7 +53,7 @@ async def query_document(
             contexts,
         )
         mlflow_logger.log_eval_to_mlflow(request.query, eval_scores)
-    
+
     return QueryResponse(
         answer=answer,
         sources=sources,
