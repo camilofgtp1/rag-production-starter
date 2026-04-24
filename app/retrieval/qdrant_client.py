@@ -83,9 +83,9 @@ def delete_by_doc_id(doc_id: str) -> None:
 
 
 def dense_search(query_vector: list[float], top_k: int = 5) -> list[dict]:
-    results = client.search(
+    results = client.query_points(
         collection_name=settings.COLLECTION_NAME,
-        query_vector=query_vector,
+        query=query_vector,
         limit=top_k,
     )
 
@@ -98,7 +98,7 @@ def dense_search(query_vector: list[float], top_k: int = 5) -> list[dict]:
             "text": r.payload.get("text"),
             "score": r.score,
         }
-        for r in results
+        for r in results.points
     ]
 
 
