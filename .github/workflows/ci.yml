@@ -23,8 +23,7 @@ jobs:
       qdrant:
         image: qdrant/qdrant:latest
         ports:
-          6333:6333
-    steps:
+          - 6333:6333
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
