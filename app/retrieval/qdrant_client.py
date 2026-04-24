@@ -2,7 +2,14 @@ import logging
 from datetime import datetime
 
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, PointStruct, VectorParams, Filter, FieldCondition, MatchValue
+from qdrant_client.models import (
+    Distance,
+    PointStruct,
+    VectorParams,
+    Filter,
+    FieldCondition,
+    MatchValue,
+)
 
 from app.config import settings
 from app.ingestion.chunker import Chunk
@@ -20,7 +27,7 @@ client = QdrantClient(
 def init_collection() -> None:
     collections = client.get_collections().collections
     collection_names = [c.name for c in collections]
-    
+
     if settings.COLLECTION_NAME not in collection_names:
         client.create_collection(
             collection_name=settings.COLLECTION_NAME,
@@ -40,22 +47,24 @@ def upsert_chunks(
 ) -> None:
     points = []
     for chunk, vector in zip(chunks, vectors):
-        points.append(PointStruct(
-            id=chunk.chunk_id,
-            vector=vector,
-            payload={
-                "chunk_id": chunk.chunk_id,
-                "doc_id": doc_id,
-                "filename": filename,
-                "version": version,
-                "text": chunk.text,
-                "strategy_used": chunk.strategy_used,
-                "token_count": chunk.token_count,
-                "parent_chunk_id": chunk.parent_chunk_id,
-                "ingested_at": datetime.utcnow().isoformat(),
-            },
-        ))
-    
+        points.append(
+            PointStruct(
+                id=chunk.chunk_id,
+                vector=vector,
+                payload={
+                    "chunk_id": chunk.chunk_id,
+                    "doc_id": doc_id,
+                    "filename": filename,
+                    "version": version,
+                    "text": chunk.text,
+                    "strategy_used": chunk.strategy_used,
+                    "token_count": chunk.token_count,
+                    "parent_chunk_id": chunk.parent_chunk_id,
+                    "ingested_at": datetime.utcnow().isoformat(),
+                },
+            )
+        )
+
     client.upsert(
         collection_name=settings.COLLECTION_NAME,
         points=points,
@@ -79,7 +88,7 @@ def dense_search(query_vector: list[float], top_k: int = 5) -> list[dict]:
         query_vector=query_vector,
         limit=top_k,
     )
-    
+
     return [
         {
             "chunk_id": r.id,
@@ -99,12 +108,12 @@ def get_all_doc_ids() -> list[str]:
         limit=10000,
         with_payload=True,
     )
-    
+
     doc_ids = set()
     for point in results[0]:
         if point.payload and "doc_id" in point.payload:
             doc_ids.add(point.payload["doc_id"])
-    
+
     return list(doc_ids)
 
 
@@ -117,7 +126,7 @@ def get_chunks_by_doc_id(doc_id: str) -> list[dict]:
         limit=10000,
         with_payload=True,
     )
-    
+
     return [
         {
             "chunk_id": point.payload.get("chunk_id"),
@@ -141,7 +150,7 @@ def get_all_chunks() -> list[dict]:
         with_payload=True,
         with_vectors=False,
     )
-    
+
     return [
         {
             "chunk_id": point.payload.get("chunk_id"),
