@@ -95,7 +95,7 @@ def dense_search(query_vector: list[float], top_k: int = 5) -> list[dict]:
             "doc_id": r.payload.get("doc_id"),
             "filename": r.payload.get("filename"),
             "version": r.payload.get("version"),
-            "text": r.payload.get("text"),
+            "text": r.payload.get("text", ""),
             "score": r.score,
         }
         for r in results.points
