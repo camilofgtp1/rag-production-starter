@@ -37,6 +37,7 @@ ENV/
 
 # Testing
 .pytest_cache/
+app/api/__pycache__/**
 .coverage
 htmlcov/
 

@@ -20,17 +20,17 @@ async def generate_answer(query: str, context_chunks: List[Dict]) -> str:
         context_parts.append(
             f"[Source: {chunk.get('filename', 'unknown')}]\n{chunk.get('text', '')}"
         )
-    
+
     context_block = "\n\n---\n\n".join(context_parts)
-    
+
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {
             "role": "user",
-            "content": f"Context:\n{context_block}\n\n---\n\nQuestion: {query}"
-        }
+            "content": f"Context:\n{context_block}\n\n---\n\nQuestion: {query}",
+        },
     ]
-    
+
     try:
         response = await client.chat.completions.create(
             model=MODEL,
