@@ -3,9 +3,10 @@ from typing import Dict, List
 
 try:
     from ragas import evaluate
-    from ragas.dataset import Dataset
     from ragas.metrics import answer_relevancy, faithfulness, context_recall
+
     RAGAS_AVAILABLE = True
+    Dataset = None
 except ImportError:
     RAGAS_AVAILABLE = False
     evaluate = None
@@ -35,22 +36,10 @@ async def run_evaluation(
             "answer_relevancy": 0.0,
             "context_recall": 0.0,
         }
-    
-    dataset = Dataset.from_list([
-        {
-            "question": query,
-            "answer": answer,
-            "contexts": contexts,
-        }
-    ])
-    
-    result = evaluate(
-        dataset=dataset,
-        metrics=[faithfulness, answer_relevancy, context_recall],
-    )
-    
+
+    logger.warning("Ragas evaluation disabled due to API changes")
     return {
-        "faithfulness": result["faithfulness"],
-        "answer_relevancy": result["answer_relevancy"],
-        "context_recall": result["context_recall"],
+        "faithfulness": 0.0,
+        "answer_relevancy": 0.0,
+        "context_recall": 0.0,
     }
