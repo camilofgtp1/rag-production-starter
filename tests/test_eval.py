@@ -1,8 +1,3 @@
-import pytest
-
-from app.evaluation import ragas_eval
-
-
 class TestEval:
     def test_eval_returns_default_when_disabled(self):
         result = {"faithfulness": 0.0, "answer_relevancy": 0.0, "context_recall": 0.0}
