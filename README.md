@@ -1,11 +1,7 @@
 # rag-production-starter
 
-[![GitHub lint](https://github.com/camilofgtp1/rag-production-starter/actions/workflows/ci.yml/badge.svg?branch=main&job=lint)](https://github.com/camilofgtp1/rag-production-starter/actions)
-[![GitHub test](https://github.com/camilofgtp1/rag-production-starter/actions/workflows/ci.yml/badge.svg?branch=main&job=test)](https://github.com/camilofgtp1/rag-production-starter/actions)
-[![GitHub docker](https://github.com/camilofgtp1/rag-production-starter/actions/workflows/ci.yml/badge.svg?branch=main&job=docker)](https://github.com/camilofgtp1/rag-production-starter/actions)
-[![GitLab lint](https://gitlab.com/camilofgtp1/rag-production-starter/badges/main/pipeline.svg?stage=lint)](https://gitlab.com/camilofgtp1/rag-production-starter/-/pipelines)
-[![GitLab test](https://gitlab.com/camilofgtp1/rag-production-starter/badges/main/pipeline.svg?stage=test)](https://gitlab.com/camilofgtp1/rag-production-starter/-/pipelines)
-[![GitLab build](https://gitlab.com/camilofgtp1/rag-production-starter/badges/main/pipeline.svg?stage=build)](https://gitlab.com/camilofgtp1/rag-production-starter/-/pipelines)
+[![GitHub CI](https://github.com/camilofgtp1/rag-production-starter/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/camilofgtp1/rag-production-starter/actions)
+[![GitLab CI](https://gitlab.com/camilofgtp1/rag-production-starter/badges/main/pipeline.svg)](https://gitlab.com/camilofgtp1/rag-production-starter/-/pipelines)
 
 *Most RAG tutorials get you to a working demo. This is what comes after.*
 
