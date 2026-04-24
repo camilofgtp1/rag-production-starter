@@ -19,6 +19,11 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: dummy-key-for-testing
+      QDRANT_URL: http://localhost:6333
+      API_KEY: test-key
+      COLLECTION_NAME: test_collection
     services:
       qdrant:
         image: qdrant/qdrant:latest
