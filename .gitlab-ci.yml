@@ -47,6 +47,7 @@ build:
   image: docker:latest
   services:
     - docker:dind
+  before_script: []
   script:
     - echo "Logging in to GitLab Container Registry..."
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $REGISTRY_URL
