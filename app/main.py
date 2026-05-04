@@ -1,15 +1,20 @@
 from contextlib import asynccontextmanager
+import logging
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from app.api import eval as eval_api
 from app.api import governance, ingest, query
+from app.mlflow import tracker
 from app.retrieval.qdrant_client import ensure_collection
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logger.info(f"Initializing MLflow at {tracker._mlflow.get_tracking_uri()}")
     ensure_collection()
     yield
 
@@ -30,4 +35,5 @@ app.include_router(eval_api.router)
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

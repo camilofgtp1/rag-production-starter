@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
 
 from app.auth import verify_api_key
-from app.evaluation import mlflow_logger, ragas_eval
+from app.evaluation import ragas_eval
+from app.mlflow import tracker
 from app.models.schemas import EvalRequest, EvalResponse
 
 router = APIRouter(prefix="/evaluate", tags=["evaluation"])
@@ -17,9 +18,15 @@ async def evaluate_answer(
         request.answer,
         request.contexts,
     )
-    
-    mlflow_logger.log_eval_to_mlflow(request.query, eval_scores)
-    
+
+    tracker.log_evaluation(
+        request.query,
+        request.answer,
+        eval_scores["faithfulness"],
+        eval_scores["answer_relevancy"],
+        eval_scores["context_recall"],
+    )
+
     return EvalResponse(
         faithfulness=eval_scores["faithfulness"],
         answer_relevancy=eval_scores["answer_relevancy"],

@@ -1,11 +1,13 @@
 import logging
+import time
 
 from fastapi import APIRouter, Depends, Query
 
 from app.auth import verify_api_key
-from app.evaluation import mlflow_logger, ragas_eval
+from app.evaluation import ragas_eval
 from app.generation import llm
 from app.ingestion import embedder
+from app.mlflow import tracker
 from app.models.schemas import ChunkSource, QueryRequest, QueryResponse
 from app.retrieval import hybrid_search
 
@@ -20,6 +22,7 @@ async def query_document(
     run_eval: bool = Query(default=False),
     _: str = Depends(verify_api_key),
 ) -> QueryResponse:
+    start_time = time.time()
     query_vectors = await embedder.embed_texts([request.query])
     query_vector = query_vectors[0]
 
@@ -31,6 +34,8 @@ async def query_document(
     )
 
     answer = await llm.generate_answer(request.query, results)
+
+    latency_ms = (time.time() - start_time) * 1000
 
     sources = [
         ChunkSource(
@@ -52,7 +57,17 @@ async def query_document(
             answer,
             contexts,
         )
-        mlflow_logger.log_eval_to_mlflow(request.query, eval_scores)
+        tracker.log_evaluation(
+            request.query,
+            answer,
+            eval_scores["faithfulness"],
+            eval_scores["answer_relevancy"],
+            eval_scores["context_recall"],
+        )
+
+    tracker.log_query(
+        request.query, request.alpha, request.top_k, len(results), latency_ms, llm.MODEL
+    )
 
     return QueryResponse(
         answer=answer,
