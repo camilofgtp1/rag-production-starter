@@ -109,6 +109,9 @@ All endpoints require `X-API-Key` header except `/health`.
 # Install dependencies (we use uv or pip)
 pip install -e .
 
+# Start services (app, Qdrant, MLflow)
+docker compose up -d
+
 # Run the API
 uvicorn app.main:app --reload
 
@@ -117,7 +120,26 @@ pytest
 
 # Run the seed demo
 python scripts/seed_demo.py
+
+# View MLflow UI
+mlflow ui
+# Open http://localhost:5000
 ```
+
+## MLflow Tracking
+
+Every operation logs to MLflow for observability and audit:
+
+| Operation | Tracked |
+|-----------|---------|
+| Ingestion | filename, strategy, chunk count, tokens, version |
+| Query | query, alpha, top_k, results count, latency_ms, model |
+| Evaluation | faithfulness, answer_relevancy, context_recall |
+| Drift Detection | threshold, stale doc count, stale doc IDs |
+| Deletion | doc_id, vectors deleted, timestamp |
+| Version Change | doc_id, old/new version, timestamp |
+
+Open the MLflow UI at http://localhost:5000 to compare runs and track trends.
 
 ## Contributing
 

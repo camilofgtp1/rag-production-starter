@@ -70,6 +70,8 @@ We chose the proxy consciously. The alternative — ML-based drift detection —
 
 Drift detection gives you a list of things to review. It does not tell you what to do with them. That decision belongs to whoever owns the content, not whoever owns the infrastructure.
 
+Every drift detection run is logged to MLflow with the threshold used and the list of stale document IDs. This creates a searchable history of when drift was detected and which documents were flagged — useful for compliance audits and for spotting patterns (e.g., the same documents repeatedly flagged means they're not being updated on schedule, not that they're genuinely stale).
+
 **Make it operational, not theoretical**:
 - Run the drift report on a schedule (weekly is usually right)
 - Route stale documents to content owners with a clear ask
@@ -105,13 +107,18 @@ If you're operating in the EU and this system ingests any documents that could c
 
 ### What We Log and Why
 
+Each governance action logs to **both stdout and MLflow**:
+
 ```
 DELETION EVENT: doc_id={doc_id} vectors_deleted={count} at={timestamp}
 ```
 
-We log to stdout, not to the application database. The reasoning is uncomfortable but important: **deletion logs stored in the application database can themselves become subject to GDPR requests**. Now you have audit records that reference deleted data, and you have to decide whether the audit record itself needs to be deleted, which defeats its purpose.
+The MLflow log persists the audit trail beyond container restarts:
+- Deletions: doc_id, vectors_deleted, deleted_at timestamp
+- Version changes: doc_id, old_version, new_version, changed_at timestamp
+- Drift detection runs: days_threshold, num_stale_documents, stale_doc_ids
 
-By logging to stdout and routing those logs to a separate compliance system (or just your standard log aggregator), you've separated the audit trail from the data store. This is the defense-in-depth answer.
+The reasoning is uncomfortable but important: **deletion logs stored in the application database can themselves become subject to GDPR requests**. MLflow provides a separate, queryable audit trail that survives container restarts without tying the audit data to the application's primary data store.
 
 ### What About Backups?
 
@@ -132,12 +139,12 @@ We didn't solve this here because it requires operational infrastructure decisio
 |----------|---------------|--------------|
 | Simple versioning | Easy to understand, minimal code | Granular history, rollback |
 | Age-based drift detection | Easy to operationalize | Accuracy (age ≠ stale) |
-| Hard deletion with logging | Compliance + audit separation | Soft-delete option |
+| Hard deletion with MLflow + stdout logging | Compliance audit trail + queryable history | Soft-delete option |
 | No automatic re-indexing | Safety from bad publishes | Operational efficiency |
 
 ### What We'd Add for a Production Deployment at Scale
 
-1. **Audit trail in a separate system**: Application logs are not a compliance-grade audit trail. Route to a SIEM or a compliant logging service.
+1. **SIEM integration**: MLflow is a good audit trail but not a compliance-grade one. Route MLflow events to a SIEM for tamper-evident logging.
 2. **Approval workflows**: Deletions and re-ingests should require an approval chain, especially in regulated environments.
 3. **Version diffing**: Human review of content changes before publishing is worth the complexity when documents have legal or policy weight.
 4. **Backup handling**: Automated GDPR-compliant backup lifecycle management. This is boring infrastructure work that nobody wants to do until it's urgent.

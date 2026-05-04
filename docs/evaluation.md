@@ -162,14 +162,23 @@ Optimize for overall user outcome. Pick the metric most relevant to the failure 
 
 ## MLflow Integration
 
-We log to MLflow because raw scores in a terminal window are not a feedback loop.
+MLflow tracks more than just evaluation scores. Every operation logs to the same experiment:
+
+| Operation | What's Logged |
+|-----------|--------------|
+| **Ingestion** | filename, strategy, chunk count, total tokens, version |
+| **Query** | query text, alpha, top_k, num results, latency_ms, model used |
+| **Evaluation** | query, answer, faithfulness, answer_relevancy, context_recall |
+| **Drift Detection** | days_threshold, num_stale_documents, stale_doc_ids |
+| **Deletion** | doc_id, vectors_deleted, deleted_at timestamp |
+| **Version Change** | doc_id, old_version, new_version, changed_at timestamp |
 
 ```bash
 mlflow ui
 # Open http://localhost:5000
 ```
 
-Use it to compare runs, see score distributions over time, and correlate changes with metric movement. If you're not going to use MLflow, print the scores to stdout and save them somewhere. The value is in the trend, not the single measurement.
+Each ingestion and governance event gets its own run. Query events log retrieval parameters and latency so you can correlate alpha changes with both response quality and performance. If you're not going to use MLflow, print the scores to stdout and save them somewhere. The value is in the trend, not the single measurement.
 
 ---
 
