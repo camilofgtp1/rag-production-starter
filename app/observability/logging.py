@@ -16,3 +16,9 @@ def configure_logging() -> None:
     root_logger.handlers.clear()
     root_logger.addHandler(handler)
     root_logger.setLevel(logging.INFO)
+
+    for name in ("uvicorn", "uvicorn.access", "uvicorn.error"):
+        logger = logging.getLogger(name)
+        logger.handlers.clear()
+        logger.addHandler(handler)
+        logger.propagate = False

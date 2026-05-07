@@ -37,9 +37,15 @@ docker compose up -d
 python scripts/seed_demo.py
 ```
 
-`docker compose up -d` starts five services: **app**, **Qdrant**, **MLflow**, **Prometheus**, and **Grafana** on a shared Docker network. No manual configuration needed.
+### Services at a glance
 
-Grafana opens at [localhost:3000](http://localhost:3000) with a pre-provisioned dashboard. MLflow at [localhost:5000](http://localhost:5000) shows runs with latency, cost, and evaluation metrics.
+| Service | URL | Purpose |
+|---------|-----|---------|
+| **App API** | http://localhost:8001 | RAG query, ingest, evaluate endpoints |
+| **Qdrant** | http://localhost:6333 | Vector database |
+| **MLflow** | http://localhost:5000 | Experiment tracking — queries, ingestions, evaluations |
+| **Prometheus** | http://localhost:9090 | Metrics collection and PromQL querying |
+| **Grafana** | http://localhost:3000 | Pre-provisioned RAG dashboard (no login required) |
 
 ## What You Get
 
@@ -49,13 +55,13 @@ Grafana opens at [localhost:3000](http://localhost:3000) with a pre-provisioned 
 | **Embeddings** | text-embedding-3-small | Good enough for most cases. The model matters less than chunking. |
 | **Chunking** | Fixed, semantic, late | Selectable per-ingest request. Read the docs to understand the tradeoffs. |
 | **Retrieval** | Hybrid BM25 + dense (RRF fusion) | We default to alpha=0.5. Tune if you have evidence it matters. |
-| **Generation** | GPT-4o-mini | Cost-effective. Provider abstraction makes switching trivial. |
+| **Generation** | GPT-4o-mini | Cost-effective. Provider abstraction makes switching trivial. Per-request USD cost logged to MLflow and visible in Grafana. |
 | **Evaluation** | Ragas + MLflow | Real scores on every eval run. Metrics are proxies, not truth. Track trends, not thresholds. |
 | **Governance** | Versioning, drift, GDPR | Minimum viable. Extend as compliance requires. |
-| **Metrics** | Prometheus | Request rate, error rate, latencies p50/p95, token usage, cost, eval scores. |
+| **Metrics** | Prometheus | Request rate, error rate, latencies p50/p95, token usage, per-request cost, eval scores. |
 | **Dashboards** | Grafana | Pre-provisioned dashboard — open localhost:3000, zero setup. |
-| **Tracking** | MLflow (experiments) | All queries, ingestions, and evaluations logged with latency and cost metrics. |
-| **Provider** | ModelProvider protocol | Swap OpenAI for any provider by implementing the protocol. |
+| **Tracking** | MLflow (experiments) | All queries, ingestions, and evaluations logged with latency, token counts, and per-query USD cost. |
+| **Provider** | ModelProvider protocol | Swap OpenAI for Anthropic, local models, or any provider by implementing the Protocol. |
 
 ## What We Deliberately Left Out
 
@@ -102,6 +108,7 @@ Then the deep dives:
 - [Hybrid Search](docs/hybrid-search.md) — Why hybrid, when to tune alpha
 - [Data Governance](docs/data-governance.md) — Versioning, drift detection, GDPR
 - [Evaluation](docs/evaluation.md) — What metrics actually measure
+- [Observability](docs/observability.md) — Prometheus, Grafana, MLflow, structured logging
 
 ## API Reference
 
@@ -178,6 +185,53 @@ Available at `/metrics` and scraped automatically by the bundled Prometheus inst
 Grafana starts pre-configured with a Prometheus datasource and a pre-provisioned RAG Platform dashboard. Open [localhost:3000](http://localhost:3000) — no login required (anonymous access enabled).
 
 Panels include: request rate, error rate, latency p50/p95, retrieval vs generation latency, chunks retrieved, token usage, estimated cost, and evaluation score gauges.
+
+## Screenshots
+
+> *These screenshots show the system after running `python scripts/seed_demo.py`. Replace with your own captures.*
+
+### MLflow — Experiment Runs
+
+Open [localhost:5000](http://localhost:5000) to see experiments with real metrics:
+
+| Experiment | Runs | Metrics |
+|------------|------|---------|
+| `rag-ingestion` | 3+ | chunk_count, ingest_latency_ms |
+| `rag-queries` | 1+ | prompt_tokens, completion_tokens, estimated_cost_usd, latency |
+| `rag-evaluation` | 1+ | faithfulness, answer_relevancy, context_recall |
+
+### Grafana — RAG Platform Dashboard
+
+Open [localhost:3000](http://localhost:3000) (anonymous access) to see populated panels for request rate, latency distributions, token usage, cost, and evaluation scores.
+
+## What changed in v0.2.0
+
+The expansion from the initial release added:
+
+- **Observability stack**: Prometheus metrics (`/metrics` endpoint), Grafana dashboard (pre-provisioned), structured JSON logging
+- **MLflow integration**: Centralized fire-and-forget tracker for all operations — queries, ingestions, evaluations
+- **Model provider abstraction**: `ModelProvider` Protocol with `OpenAIProvider`; swap implementations via config
+- **Fixed evaluation**: Ragas v0.2.x stable API, `context_recall` support with optional reference
+- **Infrastructure**: Docker Compose with 5 services on a shared bridge network, all image tags pinned
+- **Selectable chunking strategy**: Choose `fixed`, `semantic`, or `late` per ingest request
+
+## Troubleshooting
+
+### Grafana shows "No data"
+
+Run the seed demo first — `python scripts/seed_demo.py`. The Grafana dashboard populates from Prometheus, which scrapes the app at `/metrics`. No requests = no data.
+
+### MLflow experiments are empty
+
+Check that `MLFLOW_TRACKING_URI` in your `.env` matches the MLflow server address. In Docker, this is `http://mlflow:5000`. Running locally, use `http://localhost:5000`. Run `python scripts/diagnose_mlflow.py` from the repo to test connectivity.
+
+### `context_recall` returns -1.0
+
+This metric requires a `reference` (ground truth answer) to compare against. The seed demo now includes one, but if you call `/evaluate` via the API directly, pass a `reference` field. Without it, the metric returns `-1.0` (not computed).
+
+### Docker services fail to start
+
+Ensure ports 8001, 6333, 5000, 9090, and 3000 are free. Run `docker compose down` to clean up, then `docker compose up -d` again. Check individual service logs with `docker compose logs <service-name>`.
 
 ## Contributing
 
