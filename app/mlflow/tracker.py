@@ -127,6 +127,8 @@ class MLflowTracker:
         mlflow.log_param("changed_at", datetime.utcnow().isoformat())
 
     def start_run(self, run_name: Optional[str] = None) -> None:
+        if mlflow.active_run():
+            mlflow.end_run()
         mlflow.start_run(run_name=run_name)
 
     def end_run(self) -> None:
