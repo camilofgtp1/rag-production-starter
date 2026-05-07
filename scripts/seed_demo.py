@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import base64
 import os
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import httpx
 
@@ -45,18 +45,18 @@ def ingest_file(filepath: str, filename: str) -> Dict:
     return response.json()
 
 
-def run_query(query: str) -> Dict:
+def run_query(query: str, top_k: int = 3, alpha: float = 0.5) -> Dict:
     payload = {
         "query": query,
-        "top_k": 3,
-        "alpha": 0.5,
+        "top_k": top_k,
+        "alpha": alpha,
     }
 
     response = httpx.post(
         f"{API_BASE_URL}/query",
         json=payload,
         headers={"X-API-Key": API_KEY},
-        timeout=30.0,
+        timeout=60.0,
     )
     response.raise_for_status()
     return response.json()
@@ -85,6 +85,18 @@ def run_evaluation(
     return response.json()
 
 
+def print_query_result(label: str, query: str, result: Dict) -> None:
+    print(f"\n--- {label} ---")
+    print(f"Query: {query}")
+    print(f"Answer: {result['answer'][:120]}...")
+    print(f"Sources: {len(result['sources'])} chunk(s)")
+    print(
+        f"Tokens: {result.get('prompt_tokens', '?')} in / {result.get('completion_tokens', '?')} out"
+    )
+    print(f"Cost: ${result.get('estimated_cost_usd', 0):.6f}")
+    print(f"Latency: {result.get('total_latency_ms', 0):.0f}ms")
+
+
 def main():
     print("=" * 60)
     print("RAG Production Starter - Demo Seed Script")
@@ -109,28 +121,44 @@ def main():
             f"  Ingested: {display_name} -> {result['chunk_count']} chunks, version {result['version']}"
         )
 
-    print("\n[2/3] Running sample query...")
-    query = "What is the company policy on AI usage?"
-    result = run_query(query)
+    queries: List[Tuple[str, str, int, float]] = [
+        (
+            "Alpha sweep: keyword-heavy",
+            "What is the company policy on AI usage?",
+            3,
+            0.2,
+        ),
+        (
+            "Alpha sweep: default hybrid",
+            "What is the company policy on AI usage?",
+            3,
+            0.5,
+        ),
+        ("Alpha sweep: dense-heavy", "What is the company policy on AI usage?", 3, 0.8),
+        ("Top-k comparison", "What is the company policy on AI usage?", 10, 0.5),
+        ("Cross-document: technical", "How does the system architecture work?", 3, 0.5),
+        ("Cross-document: FAQ", "What are the product supported languages?", 3, 0.5),
+    ]
 
-    print(f"\nQuery: {query}")
-    print(f"\nAnswer: {result['answer']}")
-    print("\nSources:")
-    for source in result["sources"]:
-        print(f"  - {source['filename']} (score: {source['score']:.3f})")
+    print("\n[2/3] Running sample queries with varied parameters...")
+    last_result = None
+    for label, query, top_k, alpha in queries:
+        result = run_query(query, top_k=top_k, alpha=alpha)
+        print_query_result(label, query, result)
+        last_result = result
 
-    print("\n[3/3] Running evaluation...")
-    contexts = [s["text"] for s in result["sources"][:3]]
+    print("\n[3/3] Running evaluation on last query...")
+    contexts = [s["text"] for s in last_result["sources"][:3]]
     reference = (
         "Employees must not use company AI tools for personal financial gain "
         "or to create content that violates company policies."
     )
     eval_result = run_evaluation(
-        query,
-        result["answer"],
+        queries[-1][1],
+        last_result["answer"],
         contexts,
         reference=reference,
-        filename=result["sources"][0]["filename"],
+        filename=last_result["sources"][0]["filename"],
     )
 
     print("\nEvaluation Scores:")
@@ -139,7 +167,7 @@ def main():
     print(f"  Context Recall: {eval_result['context_recall']:.3f}")
 
     print("\n" + "=" * 60)
-    print("Demo complete!")
+    print("Demo complete! 6 queries logged to MLflow rag-queries for comparison.")
     print("=" * 60)
 
 
