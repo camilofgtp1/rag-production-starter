@@ -1,5 +1,6 @@
 import base64
 import logging
+import time
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends
@@ -7,9 +8,11 @@ from fastapi import APIRouter, Depends
 from app.auth import verify_api_key
 from app.governance import versioning
 from app.ingestion import chunker, embedder, loader
-from app.mlflow import tracker
+from app.mlflow.tracker import tracker
 from app.models.schemas import IngestRequest
+from app.observability.metrics import DOCUMENTS_INGESTED
 from app.retrieval import qdrant_client
+from app.tracking.mlflow_tracker import log_ingest_run
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +24,7 @@ async def ingest_document(
     request: IngestRequest,
     _: str = Depends(verify_api_key),
 ):
+    ingest_start = time.perf_counter()
     doc_id = request.doc_id or str(uuid4())
 
     if request.mime_type in [
@@ -33,7 +37,7 @@ async def ingest_document(
 
     text = loader.load_document(content_bytes, request.mime_type)
 
-    chunks = chunker.chunk_document(text, strategy="semantic")
+    chunks = chunker.chunk_document(text, strategy=request.chunking_strategy)
 
     vectors = await embedder.embed_texts([c.text for c in chunks])
 
@@ -61,17 +65,28 @@ async def ingest_document(
             request.filename,
             doc_id,
             len(chunks),
-            "semantic",
+            request.chunking_strategy,
             total_tokens,
             request.version,
         )
     finally:
         tracker.end_run()
 
+    ingest_latency_ms = (time.perf_counter() - ingest_start) * 1000
+    DOCUMENTS_INGESTED.labels(chunking_strategy=request.chunking_strategy).inc()
+
+    log_ingest_run(
+        doc_id=doc_id,
+        filename=request.filename,
+        chunk_count=len(chunks),
+        chunking_strategy=request.chunking_strategy,
+        ingest_latency_ms=ingest_latency_ms,
+    )
+
     return {
         "doc_id": doc_id,
         "chunk_count": len(chunks),
         "version": request.version,
-        "strategy": "semantic",
+        "strategy": request.chunking_strategy,
         "total_tokens": total_tokens,
     }
