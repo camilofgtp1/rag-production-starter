@@ -10,6 +10,22 @@ logger = logging.getLogger(__name__)
 
 
 class ModelProvider(Protocol):
+    """
+    Protocol (not ABC) defining the interface for LLM providers.
+
+    Why Protocol over ABC:
+    - Structural subtyping: any object with these methods satisfies the protocol
+      without needing to inherit from a base class. This lets us wrap third-party
+      SDKs (OpenAI, Anthropic, etc.) without forcing them into our class hierarchy.
+    - Zero runtime overhead: Protocols are purely a type-checking construct.
+    - Easier testing: mock objects only need to match the shape, not inherit.
+
+    To add a second provider (e.g. AnthropicProvider):
+      1. Create a class that implements `complete()` and `embed()`
+      2. Add it to the `get_provider()` factory below
+      3. Set `MODEL_PROVIDER=anthropic` in .env
+    """
+
     async def complete(
         self,
         system_prompt: str,
@@ -93,6 +109,7 @@ class OpenAIProvider:
 
 
 def get_provider() -> ModelProvider:
+    """Factory: returns the provider implementation matching MODEL_PROVIDER config."""
     provider_name = settings.MODEL_PROVIDER
     if provider_name == "openai":
         return OpenAIProvider()
