@@ -131,6 +131,29 @@ The queries where you want pure semantic:
 
 ---
 
+## Model Provider Abstraction
+
+**Decision**: Define a `ModelProvider` protocol with `OpenAIProvider` as the default implementation.
+
+### Why a Protocol, Not a Concrete Class
+
+RAG systems that hardcode a model provider are making an implicit bet: "we will never change providers." That bet fails when pricing changes, a better model emerges, or you need to run inference on-premises.
+
+The `ModelProvider` protocol in `app/generation/provider.py` defines two methods:
+
+- `complete(system_prompt, user_prompt, max_tokens)` → `(answer, usage_dict)`
+- `embed(texts)` → `list[list[float]]`
+
+Any provider that implements this protocol can be swapped in via the `MODEL_PROVIDER` config variable. The `get_provider()` factory returns the correct implementation.
+
+**What we traded away:**
+- **One extra abstraction layer**: For teams that will never switch providers, this is unnecessary indirection. The factory function adds ~50 lines of code that might never be exercised.
+- **Testing overhead**: Protocol-based design requires mocking at the interface level rather than the client level.
+
+**Why it's still worth it**: The cost of extraction is near zero at the start. The cost of extracting an existing provider after six months of hardcoded calls is significant. This is insurance, not optimization.
+
+---
+
 ## Evaluation: Ragas + MLflow
 
 **Decision**: Use Ragas for evaluation metrics, logged to MLflow.
@@ -156,8 +179,8 @@ We included evaluation because **you need it to improve systematically**. But le
 - The metrics map to actionable improvements
 
 **Tradeoffs we accepted:**
-- **Cost**: Each evaluation costs OpenAI credits. Don't run eval on every query. Sample periodically.
-- **Latency**: Evaluation adds 2-5 seconds. Again, don't run on every request.
+- **Cost**: Each evaluation consumes LLM tokens. Don't run eval on every query. Sample periodically.
+- **Latency**: Evaluation adds significant time (30-60 seconds). Use sparingly.
 - **Metric instability**: These scores can fluctuate. Track trends, not absolute values.
 
 ### The More Important Question Nobody Asks
@@ -197,6 +220,109 @@ We made deliberate choices to address these:
 
 ---
 
+## MLflow Tracking: Fire-and-Forget
+
+**Decision**: All MLflow calls are wrapped in try/except — they log a warning and never raise.
+
+### Why Not Let MLflow Errors Propagate?
+
+MLflow is a tracking tool, not an operational dependency. If MLflow is down:
+
+- Ingestion should still work
+- Queries should still return answers
+- The system should degrade gracefully, not crash
+
+Every MLflow call in `app/tracking/mlflow_tracker.py` follows this pattern:
+
+```python
+try:
+    mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
+    mlflow.set_experiment("rag-queries")
+    with mlflow.start_run():
+        mlflow.log_params(...)
+        mlflow.log_metrics(...)
+except Exception:
+    logger.warning("Failed to log query run to MLflow", exc_info=True)
+```
+
+No `start_run` wraps any endpoint's core logic. The tracking is always a side effect, never on the critical path.
+
+**What we traded away:**
+- **Loss of tracking data**: If MLflow is down, that query just isn't tracked. You won't know until you check the logs.
+- **Debugging complexity**: Silent failures can mask configuration issues. We log warnings explicitly.
+
+---
+
+## Observability: Prometheus + Grafana
+
+**Decision**: Use Prometheus for metrics collection and Grafana for dashboards, both pre-configured in Docker Compose.
+
+### The Metrics That Matter
+
+We track the following Prometheus metrics — chosen because they're actionable, not because they're comprehensive:
+
+| Category | Metrics | Action When Red |
+|----------|---------|-----------------|
+| Traffic | Request rate, error rate (by endpoint) | Identify broken endpoints |
+| Latency | Request p50/p95, retrieval p50, generation p50 | Tune chunking, cache embeddings |
+| Consumption | Token count (prompt/completion), estimated cost | Review model choice, add caching |
+| Quality | Chunks retrieved, evaluation scores | Tune alpha, review chunk boundaries |
+| Ingestion | Documents ingested (by strategy) | Monitor throughput |
+
+**Why Prometheus over Datadog/New Relic:**
+- Free, self-hosted, no data egress costs
+- Pre-configured in the docker-compose — zero setup for evaluation
+- The query language (PromQL) is the industry standard
+
+**What we traded away:**
+- **No alerting**: Prometheus doesn't include alerting out of the box. For production, you'd add Alertmanager or a managed equivalent.
+- **Basic dashboards**: Grafana is functional but not beautiful. Pre-built panels cover the essential signals.
+- **No tracing**: These are metrics, not distributed traces. For a starter project, metrics are sufficient.
+
+### Structured Logging
+
+We use JSON-structured logging via `python-json-logger` (fallback: `structlog`). Every log line is parseable without regex. The format:
+
+```json
+{"timestamp": "2026-05-07T12:29:32", "level": "INFO", "name": "app.main", "message": "MLflow initialized"}
+```
+
+This matters when you're grep-ing through log files at 2am. It also means log aggregation tools (Loki, ELK) can ingest without custom parsing rules.
+
+---
+
+## Infrastructure: Docker Compose
+
+**Decision**: All five services run under a single `docker compose up -d` on a shared bridge network.
+
+### The Service Topology
+
+```
+┌─────────┐     ┌──────────┐     ┌────────────┐
+│  Grafana │────▶│Prometheus│◀────│   App      │
+│ :3000    │     │ :9090    │     │ :8001      │
+└─────────┘     └──────────┘     └────┬───────┘
+       │                               │
+       │                    ┌──────────┴──────────┐
+       │                    │                     │
+       │               ┌────▼────┐          ┌────▼────┐
+       │               │  Qdrant │          │ MLflow  │
+       │               │ :6333   │          │ :5000   │
+       │               └─────────┘          └─────────┘
+       │
+       │          (all on rag-network bridge)
+```
+
+All services communicate by service name over the `rag-network` bridge. No `network_mode: host` — ports are explicitly mapped.
+
+**Version pinning**: Every external image is pinned to a specific version (qdrant:v1.15.4, prometheus:v3.11.3, grafana:13.0.1, mlflow:v2.10.0). No `:latest` tags in production.
+
+**What we traded away:**
+- **Bridge network overhead**: Slightly more indirection than host networking. Worth it for port clarity and isolation.
+- **Persistent volumes**: Qdrant storage and MLflow artifacts persist across restarts. Use `docker compose down -v` to reset.
+
+---
+
 ## What We Left Out (And Why)
 
 These are all reasonable choices that other projects make. We're explicit about why we said no:
@@ -208,6 +334,8 @@ These are all reasonable choices that other projects make. We're explicit about 
 | Async ingestion | Synchronous is simpler and sufficient for starter scale. Add a queue when you need one. |
 | Custom embedding models | Would require infrastructure (GPU hosting). Not worth the operational burden yet. |
 | Fine-tuning | Out of scope for retrieval. If you need this, you're past "starter" scale. |
+| Alerting (Alertmanager) | Prometheus provides metrics; alerting requires Alertmanager. Add when you have SLOs. |
+| Log aggregation (Loki/ELK) | JSON structured logging makes ingestion trivial. Add when you need cross-service tracing. |
 
 ---
 
@@ -224,6 +352,10 @@ Here's what actually matters when you're building this for production:
 4. **Chunking is the hardest problem.** More effort goes into chunking than any other single decision. Don't let anyone tell you otherwise.
 
 5. **Your eval set defines your system.** What queries you test against determines what gets optimized. Make sure your eval set represents production traffic.
+
+6. **Observability is a first-class concern, not an afterthought.** Prometheus, structured logging, and MLflow tracking are not "nice to haves." They are how you know the system is working.
+
+7. **Abstract model providers early.** The cost of extraction is near zero at the start. The cost of extracting a hardcoded provider later is significant.
 
 This project gives you a functional starting point. The decisions embedded here represent our best judgment for a general case. Your specific use case almost certainly has factors that would lead to different choices. That's fine — the important part is understanding why you made them.
 
