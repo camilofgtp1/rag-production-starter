@@ -62,12 +62,16 @@ def run_query(query: str) -> Dict:
     return response.json()
 
 
-def run_evaluation(query: str, answer: str, contexts: list) -> Dict:
+def run_evaluation(
+    query: str, answer: str, contexts: list, reference: str = ""
+) -> Dict:
     payload = {
         "query": query,
         "answer": answer,
         "contexts": contexts,
     }
+    if reference:
+        payload["reference"] = reference
 
     response = httpx.post(
         f"{API_BASE_URL}/evaluate",
@@ -115,7 +119,11 @@ def main():
 
     print("\n[3/3] Running evaluation...")
     contexts = [s["text"] for s in result["sources"][:3]]
-    eval_result = run_evaluation(query, result["answer"], contexts)
+    reference = (
+        "Employees must not use company AI tools for personal financial gain "
+        "or to create content that violates company policies."
+    )
+    eval_result = run_evaluation(query, result["answer"], contexts, reference=reference)
 
     print("\nEvaluation Scores:")
     print(f"  Faithfulness:    {eval_result['faithfulness']:.3f}")

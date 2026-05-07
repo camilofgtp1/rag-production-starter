@@ -7,7 +7,6 @@ from app.auth import verify_api_key
 from app.evaluation import ragas_eval
 from app.generation import llm
 from app.ingestion import embedder
-from app.mlflow.tracker import tracker
 from app.models.schemas import ChunkSource, QueryRequest, QueryResponse
 from app.observability.metrics import (
     CHUNKS_RETRIEVED,
@@ -84,23 +83,6 @@ async def query_document(
             answer,
             contexts,
         )
-        tracker.log_evaluation(
-            request.query,
-            answer,
-            eval_scores["faithfulness"],
-            eval_scores["answer_relevancy"],
-            eval_scores["context_recall"],
-        )
-
-    tracker.log_query(
-        request.query,
-        request.alpha,
-        request.top_k,
-        len(results),
-        total_latency_ms,
-        llm.MODEL,
-    )
-
     log_query_run(
         query=request.query,
         alpha=request.alpha,

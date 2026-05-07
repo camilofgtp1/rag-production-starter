@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends
 
 from app.auth import verify_api_key
 from app.evaluation import ragas_eval
-from app.mlflow.tracker import tracker
 from app.models.schemas import EvalRequest, EvalResponse
 from app.observability.metrics import EVALUATION_SCORES
 from app.tracking.mlflow_tracker import log_eval_run
@@ -19,14 +18,7 @@ async def evaluate_answer(
         request.query,
         request.answer,
         request.contexts,
-    )
-
-    tracker.log_evaluation(
-        request.query,
-        request.answer,
-        eval_scores["faithfulness"],
-        eval_scores["answer_relevancy"],
-        eval_scores["context_recall"],
+        reference=request.reference,
     )
 
     if "error" not in eval_scores:

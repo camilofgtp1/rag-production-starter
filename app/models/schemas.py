@@ -53,6 +53,7 @@ class EvalRequest(BaseModel):
     query: str
     answer: str
     contexts: list[str]
+    reference: Optional[str] = None
 
 
 class EvalResponse(BaseModel):
