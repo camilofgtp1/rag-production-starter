@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -12,6 +12,10 @@ class IngestRequest(BaseModel):
     )
     doc_id: Optional[str] = None
     version: int = 1
+    chunking_strategy: Literal["fixed", "semantic", "late"] = Field(
+        default="semantic",
+        description="Chunking strategy: fixed, semantic, or late",
+    )
 
 
 class QueryRequest(BaseModel):
@@ -38,6 +42,11 @@ class QueryResponse(BaseModel):
     answer: str
     sources: list[ChunkSource]
     eval_scores: Optional[dict] = None
+    prompt_tokens: Optional[int] = None
+    completion_tokens: Optional[int] = None
+    estimated_cost_usd: Optional[float] = None
+    retrieval_latency_ms: Optional[float] = None
+    generation_latency_ms: Optional[float] = None
 
 
 class EvalRequest(BaseModel):
