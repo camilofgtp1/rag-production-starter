@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.auth import verify_api_key
 from app.governance import deletion, drift
-from app.mlflow import tracker
+from app.mlflow.tracker import tracker
 
 router = APIRouter(prefix="/governance", tags=["governance"])
 
