@@ -2,11 +2,14 @@ from contextlib import asynccontextmanager
 import logging
 
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from app.api import eval as eval_api
 from app.api import governance, ingest, query
-from app.mlflow import tracker
+from app.mlflow.tracker import tracker
+from app.observability.logging import configure_logging
+from app.observability.middleware import PrometheusMiddleware
 from app.retrieval.qdrant_client import ensure_collection
 
 logger = logging.getLogger(__name__)
@@ -14,17 +17,25 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info(f"Initializing MLflow at {tracker._mlflow.get_tracking_uri()}")
+    configure_logging()
+    logger.info("MLflow initialized")
     ensure_collection()
     yield
 
 
 app = FastAPI(title="rag-production-starter", version="0.1.0", lifespan=lifespan)
 
+app.add_middleware(PrometheusMiddleware)
+
 
 @app.get("/health")
 async def health_check():
     return JSONResponse(content={"status": "ok"})
+
+
+@app.get("/metrics", include_in_schema=False)
+async def metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 app.include_router(ingest.router)
