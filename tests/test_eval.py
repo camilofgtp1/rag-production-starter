@@ -68,7 +68,7 @@ class TestEval:
         with patch("app.evaluation.ragas_eval.evaluate", return_value=mock_result):
             from app.evaluation.ragas_eval import run_evaluation
 
-            result = asyncio.run(
+            asyncio.run(
                 run_evaluation(
                     query="What is RAG?",
                     answer="RAG is Retrieval Augmented Generation",

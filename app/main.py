@@ -7,7 +7,6 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from app.api import eval as eval_api
 from app.api import governance, ingest, query
-from app.mlflow.tracker import tracker
 from app.observability.logging import configure_logging
 from app.observability.middleware import PrometheusMiddleware
 from app.retrieval.qdrant_client import ensure_collection
