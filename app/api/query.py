@@ -87,7 +87,7 @@ async def query_document(
         query=request.query,
         alpha=request.alpha,
         top_k=request.top_k,
-        chunking_strategy="semantic",
+        chunking_strategy="n/a (set at ingestion)",
         model=llm.MODEL,
         retrieval_latency_ms=retrieval_latency_ms,
         generation_latency_ms=generation_latency_ms,
