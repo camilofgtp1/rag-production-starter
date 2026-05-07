@@ -27,10 +27,13 @@ This project does. It's the skeleton of a production system — opinionated, doc
 cp .env.example .env
 # Edit .env with your API keys (OpenAI minimum)
 
-# 2. Start all services
+# 2. Install dependencies (required for the seed demo script)
+pip install -e .
+
+# 3. Start all services
 docker compose up -d
 
-# 3. Run the demo
+# 4. Run the demo
 python scripts/seed_demo.py
 ```
 
