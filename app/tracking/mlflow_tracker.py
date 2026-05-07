@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import mlflow
 
@@ -55,6 +56,7 @@ def log_eval_run(
     faithfulness: float,
     answer_relevancy: float,
     context_recall: float,
+    filename: Optional[str] = None,
 ) -> None:
     try:
         mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
@@ -62,6 +64,8 @@ def log_eval_run(
 
         with mlflow.start_run():
             mlflow.log_param("query", query[:200])
+            if filename:
+                mlflow.log_param("filename", filename)
             mlflow.log_metrics(
                 {
                     "faithfulness": faithfulness,

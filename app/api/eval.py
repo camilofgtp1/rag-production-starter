@@ -27,6 +27,7 @@ async def evaluate_answer(
             faithfulness=eval_scores["faithfulness"],
             answer_relevancy=eval_scores["answer_relevancy"],
             context_recall=eval_scores["context_recall"],
+            filename=request.filename,
         )
         EVALUATION_SCORES.labels(metric="faithfulness").set(eval_scores["faithfulness"])
         EVALUATION_SCORES.labels(metric="answer_relevancy").set(

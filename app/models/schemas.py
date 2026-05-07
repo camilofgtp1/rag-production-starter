@@ -54,6 +54,7 @@ class EvalRequest(BaseModel):
     answer: str
     contexts: list[str]
     reference: Optional[str] = None
+    filename: Optional[str] = None
 
 
 class EvalResponse(BaseModel):
