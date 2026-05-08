@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple
 import httpx
 
 API_BASE_URL = "http://localhost:8001"
-API_KEY = os.getenv("API_KEY", "dev-key")
+API_KEY = os.getenv("API_KEY", "test-key")
 
 _client = httpx.Client(
     timeout=httpx.Timeout(120.0, connect=10.0),
