@@ -8,6 +8,11 @@ import httpx
 API_BASE_URL = "http://localhost:8001"
 API_KEY = os.getenv("API_KEY", "dev-key")
 
+_client = httpx.Client(
+    timeout=httpx.Timeout(120.0, connect=10.0),
+    limits=httpx.Limits(max_keepalive_connections=10),
+)
+
 
 def read_file(path: str) -> Tuple[str, str]:
     with open(path, "rb") as f:
@@ -35,11 +40,10 @@ def ingest_file(filepath: str, filename: str) -> Dict:
         "version": 1,
     }
 
-    response = httpx.post(
+    response = _client.post(
         f"{API_BASE_URL}/ingest",
         json=payload,
         headers={"X-API-Key": API_KEY},
-        timeout=120.0,
     )
     response.raise_for_status()
     return response.json()
@@ -52,11 +56,10 @@ def run_query(query: str, top_k: int = 3, alpha: float = 0.5) -> Dict:
         "alpha": alpha,
     }
 
-    response = httpx.post(
+    response = _client.post(
         f"{API_BASE_URL}/query",
         json=payload,
         headers={"X-API-Key": API_KEY},
-        timeout=60.0,
     )
     response.raise_for_status()
     return response.json()
@@ -75,11 +78,10 @@ def run_evaluation(
     if filename:
         payload["filename"] = filename
 
-    response = httpx.post(
+    response = _client.post(
         f"{API_BASE_URL}/evaluate",
         json=payload,
         headers={"X-API-Key": API_KEY},
-        timeout=120.0,
     )
     response.raise_for_status()
     return response.json()

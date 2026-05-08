@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 class MLflowTracker:
     def __init__(self):
         mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
-        mlflow.set_experiment("rag-production-starter")
 
     def log_ingestion(
         self,
@@ -129,6 +128,7 @@ class MLflowTracker:
     def start_run(self, run_name: Optional[str] = None) -> None:
         if mlflow.active_run():
             mlflow.end_run()
+        mlflow.set_experiment("rag-governance")
         mlflow.start_run(run_name=run_name)
 
     def end_run(self) -> None:
