@@ -30,14 +30,17 @@ def read_file(path: str) -> Tuple[str, str]:
         return content.decode("utf-8"), mime
 
 
-def ingest_file(filepath: str, filename: str) -> Dict:
+def ingest_file(
+    filepath: str, filename: str, chunking_strategy: str = "semantic", version: int = 1
+) -> Dict:
     content, mime = read_file(filepath)
 
     payload = {
         "filename": filename,
         "content": content,
         "mime_type": mime,
-        "version": 1,
+        "version": version,
+        "chunking_strategy": chunking_strategy,
     }
 
     response = _client.post(
@@ -105,23 +108,34 @@ def main():
     print("=" * 60)
 
     sample_dir = os.path.join(os.path.dirname(__file__), "samples")
-    samples = [
-        ("company_policy.txt", "Company Policy"),
-        ("technical_overview.md", "Technical Overview"),
-        ("product_faq.txt", "Product FAQ"),
-    ]
 
-    print("\n[1/3] Ingesting sample documents...")
-    for filename, display_name in samples:
+    print("\n[1/3] Ingesting sample documents with varied strategies...")
+    ingests = [
+        ("company_policy.txt", "Company Policy", "fixed", 1),
+        ("technical_overview.md", "Technical Overview", "semantic", 1),
+        ("product_faq.txt", "Product FAQ", "late", 1),
+    ]
+    for filename, display_name, strategy, version in ingests:
         filepath = os.path.join(sample_dir, filename)
         if not os.path.exists(filepath):
             print(f"  Warning: {filepath} not found, skipping")
             continue
-
-        result = ingest_file(filepath, display_name)
-        print(
-            f"  Ingested: {display_name} -> {result['chunk_count']} chunks, version {result['version']}"
+        result = ingest_file(
+            filepath, display_name, chunking_strategy=strategy, version=version
         )
+        print(
+            f"  Ingested: {display_name} -> {result['chunk_count']} chunks, v{result['version']}, strategy={strategy}"
+        )
+
+    # Re-ingest one doc with version bump to show versioning + strategy switch
+    print("  Re-ingesting Company Policy with version bump + different strategy...")
+    filepath = os.path.join(sample_dir, "company_policy.txt")
+    result = ingest_file(
+        filepath, "Company Policy", chunking_strategy="semantic", version=2
+    )
+    print(
+        f"  Ingested: Company Policy -> {result['chunk_count']} chunks, v{result['version']}, strategy=semantic"
+    )
 
     queries: List[Tuple[str, str, int, float]] = [
         (
