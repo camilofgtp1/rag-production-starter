@@ -188,7 +188,7 @@ Panels include: request rate, error rate, latency p50/p95, retrieval vs generati
 
 ## Screenshots
 
-> *These screenshots show the system after running `python scripts/seed_demo.py`. Replace with your own captures.*
+> *Screenshots captured after running `python scripts/seed_demo.py --dataset-dir scripts/datasets/scale100`.*
 
 ### MLflow — Experiment Runs
 
@@ -196,13 +196,28 @@ Open [localhost:5000](http://localhost:5000) to see experiments with real metric
 
 | Experiment | Runs | Metrics |
 |------------|------|---------|
-| `rag-ingestion` | 3+ | chunk_count, ingest_latency_ms |
-| `rag-queries` | 1+ | prompt_tokens, completion_tokens, estimated_cost_usd, latency |
-| `rag-evaluation` | 1+ | faithfulness, answer_relevancy, context_recall |
+| `rag-ingestion` | 100+ | chunk_count, ingest_latency_ms |
+| `rag-queries` | 10+ | prompt_tokens, completion_tokens, estimated_cost_usd, latency |
+| `rag-evaluation` | 5+ | faithfulness, answer_relevancy, context_recall |
+
+![MLflow ingestion runs](docs/mlflow-rag-ingestion-runs.png)
+*rag-ingestion experiment — 100+ runs with varied chunking strategies*
+
+![MLflow query comparison](docs/mlflow-comparing-queries.png)
+*rag-queries experiment — alpha sweep and top-k comparison*
+
+![MLflow evaluation comparison](docs/mlflow-rag-evaluation-comparisson.png)
+*rag-evaluation experiment — faithfulness, relevancy, recall scores*
 
 ### Grafana — RAG Platform Dashboard
 
 Open [localhost:3000](http://localhost:3000) (anonymous access) to see populated panels for request rate, latency distributions, token usage, cost, and evaluation scores.
+
+![Grafana dashboard overview](docs/grafana-dashboard.png)
+*RAG Platform dashboard — request rate, error rate, latency, token usage*
+
+![Grafana metrics detail](docs/grafana-rag-metrics.png)
+*Detailed metrics — cost tracking, chunk counts, evaluation scores*
 
 ## What changed in v0.2.0
 

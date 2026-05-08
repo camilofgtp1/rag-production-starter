@@ -51,6 +51,9 @@ qdrant_storage/
 # Local MLflow artifacts
 mlflow/
 
+# Generated datasets
+scripts/datasets/
+
 # Requirements doc (internal planning, not for VCS)
 rag-expansion-requirements.md
 
